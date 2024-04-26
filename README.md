@@ -1,6 +1,13 @@
 # web.go
 使用 Go 建立 Web
 
+# 執行
+```
+go run main.go
+```
+
+http://localhost:8080/ping
+
 # git commit message
 - 常用描述
 ```
