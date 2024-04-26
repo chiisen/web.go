@@ -14,33 +14,11 @@ import (
 	"fmt"
 
 	_ "github.com/denisenkom/go-mssqldb"
+
+	"github.com/go-redis/redis/v8"
 )
 
 func main() {
-	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
-		"daydb-svc.h1-db-dev", "mobile_api", "a:oY%~^E+VU0", 1433, "HKNetGame_HJ")
-
-	db, err := sql.Open("sqlserver", connString)
-	if err != nil {
-		log.Fatal("Open connection failed:", err.Error())
-	}
-	defer db.Close()
-
-	rows, err := db.Query("SELECT name, state_desc FROM sys.databases WHERE name = 'HKNetGame_HJ';")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var name, state_desc string // 這裡的變數類型和數量應該與你的資料表欄位匹配
-		err := rows.Scan(&name, &state_desc)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("name: %s, state_desc: %s\n", name, state_desc)
-	}
 
 	router := gin.Default()
 
@@ -50,6 +28,50 @@ func main() {
 
 	router.POST("/api/Member/login", func(c *gin.Context) {
 		c.String(http.StatusOK, "login")
+	})
+
+	router.GET("/healthcheck", func(c *gin.Context) {
+		rdb := redis.NewClient(&redis.Options{
+			Addr:     "redis-cluster.h1-redis-dev:6379",
+			Password: "h1devredis1688", // no password set
+			DB:       0,                // use default DB
+		})
+
+		ctx := context.Background()
+
+		val, err := rdb.Ping(ctx).Result()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(val)
+		}
+
+		connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
+			"daydb-svc.h1-db-dev", "mobile_api", "a:oY%~^E+VU0", 1433, "HKNetGame_HJ")
+
+		db, err := sql.Open("sqlserver", connString)
+		if err != nil {
+			log.Fatal("Open connection failed:", err.Error())
+		}
+		defer db.Close()
+
+		rows, err := db.Query("SELECT name, state_desc FROM sys.databases WHERE name = 'HKNetGame_HJ';")
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+		defer rows.Close()
+
+		var name, state_desc string
+		for rows.Next() {
+			err := rows.Scan(&name, &state_desc)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("name: %s, state_desc: %s\n", name, state_desc)
+		}
+		str := fmt.Sprintf("val: %v, name: %s, state_desc: %s", val, name, state_desc)
+		c.String(http.StatusOK, str)
 	})
 
 	srv := &http.Server{
