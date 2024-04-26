@@ -1,6 +1,10 @@
 # web.go
 使用 Go 建立 Web
 
+# 初始化
+```
+go mod init github.com/chiisen/web.go
+```
 # 執行
 ```
 go run main.go
