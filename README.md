@@ -5,8 +5,8 @@
 ```
 go run main.go
 ```
-
-http://localhost:8080/ping
+# 瀏覽
+http://localhost:8080/
 
 # git commit message
 - 常用描述
